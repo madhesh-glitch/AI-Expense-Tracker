@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% block content %}
+<section class="auth">
+  <div class="card auth-card">
+    <h2 id="authTitle">Log In to Your Account</h2>
+
+    <form id="loginForm" method="POST" action="{{ url_for('login') }}" class="auth-view is-active">
+      <div class="form-row">
+        <input name="email" type="email" placeholder="Email" required>
+      </div>
+      <div class="form-row">
+        <input name="password" type="password" placeholder="Password" required>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Log In</button>
+      </div>
+      <p class="switch-note">New user? <a href="#" id="showRegister" class="switch-link">Create an Account</a></p>
+    </form>
+
+    <form id="registerForm" method="POST" action="{{ url_for('register') }}" class="auth-view">
+      <div class="form-row">
+        <input name="email" type="email" placeholder="Email" required>
+      </div>
+      <div class="form-row">
+        <input name="password" type="password" placeholder="Password" required>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </div>
+      <p class="switch-note">Already have an account? <a href="#" id="showLogin" class="switch-link">Log In</a></p>
+    </form>
+
+    {% if error %}<p class="form-note error">{{ error }}</p>{% endif %}
+    {% if msg %}<p class="form-note success">{{ msg }}</p>{% endif %}
+  </div>
+</section>
+
+<script>
+  (function(){
+    const title = document.getElementById('authTitle');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const toRegister = document.getElementById('showRegister');
+    const toLogin = document.getElementById('showLogin');
+    if (toRegister) toRegister.addEventListener('click', function(e){
+      e.preventDefault();
+      loginForm.classList.remove('is-active');
+      registerForm.classList.add('is-active');
+      title.textContent = 'Create Your Account';
+    });
+    if (toLogin) toLogin.addEventListener('click', function(e){
+      e.preventDefault();
+      registerForm.classList.remove('is-active');
+      loginForm.classList.add('is-active');
+      title.textContent = 'Log In to Your Account';
+    });
+  })();
+  </script>
+{% endblock %}

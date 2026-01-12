@@ -1,0 +1,1 @@
+mongodb+srv://Madhesh_M_A:madhesh1K@ai-cluster.kkow4qb.mongodb.net/?retryWrites=true&w=majority&appName=AI-Cluster

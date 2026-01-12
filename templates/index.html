@@ -1,0 +1,166 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Welcome, {{ user }}</h2>
+
+<!-- Summary KPI Row -->
+<section class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-title">Net Balance</div>
+    <div class="kpi-value" id="kpiNet">—</div>
+    <div class="kpi-sub" id="kpiPeriod">This month</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-title">Total Spend</div>
+    <div class="kpi-value" id="kpiSpend">—</div>
+    <div class="kpi-sub">Month-to-date</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-title">Budget Used</div>
+    <div class="progress">
+      <div class="progress-bar" id="budgetBar" style="width:0%"></div>
+    </div>
+    <div class="kpi-sub" id="budgetNote">No budget set</div>
+  </div>
+  <div class="kpi-card kpi-cta">
+    <div class="kpi-title">Deep Analysis</div>
+    <p class="kpi-mini">Explore trends, categories, and AI insights</p>
+    <a class="btn btn-primary" href="{{ url_for('analysis_page') }}">View Detailed Reports</a>
+  </div>
+  </section>
+
+<!-- Top Categories Mini Chart & Recent -->
+<section class="split-2">
+  <div class="card">
+    <h3>This Month: Top Categories</h3>
+    <canvas id="miniTopCats" height="180"></canvas>
+  </div>
+  <div class="card">
+    <h3>Recent Activity</h3>
+    <ul id="recentList" class="recent-list"></ul>
+  </div>
+</section>
+
+<section>
+  <h3>Upload Your Receipt</h3>
+  <input type="file" id="receiptInput">
+  <button onclick="uploadReceipt()" class="btn btn-primary">Analyze</button>
+  <button onclick="deleteLastExpense()" class="btn btn-secondary">Delete Last Expense</button>
+  <button onclick="clearUserData()" class="btn btn-danger">Clear All My Data</button>
+  <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+    <button class="btn btn-ghost" onclick="openExpenseModal('capture')">+ Add New Expense</button>
+    <button class="btn btn-secondary" onclick="openExpenseModal('upload')">Upload/Capture Options</button>
+  </div>
+  <div id="result" style="margin-top: 1em;"></div>
+</section>
+
+<section style="margin-top: 2em;">
+  <h3>Expense Summary</h3>
+  <canvas id="expenseChart" width="400" height="200"></canvas>
+</section>
+
+<section style="margin-top: 2em;">
+  <h3>Assessment</h3>
+  <div id="assessment" style="padding: 0.5em; border: 1px solid #ddd; border-radius: 6px;"></div>
+  <ul id="assessmentTips" style="margin-top: 0.5em;"></ul>
+  <small id="assessmentNote" style="color: #666;"></small>
+  <div style="margin-top:8px;">
+    <button onclick="downloadAnalysisPdf()" class="btn btn-secondary">Download Analysis (PDF)</button>
+  </div>
+</section>
+
+<!-- Announcements Section -->
+<section class="card" style="margin-top: 2em;">
+  <h3>📢 Announcements</h3>
+  <div id="announcements-list" class="announcements-list">
+    <div class="loading">Loading announcements...</div>
+  </div>
+</section>
+
+<!-- FAQs Section -->
+<section class="card" style="margin-top: 1.5em;">
+  <h3>❓ Frequently Asked Questions</h3>
+  <div id="faq-list" class="faq-list">
+    <div class="loading">Loading FAQs...</div>
+  </div>
+</section>
+
+<!-- Chat Section -->
+<section style="margin-top: 2em;">
+  <h3>Chat with AI Expense Tracker</h3>
+  <div id="chatMessages" style="height: 180px; overflow-y: auto; border: 1px solid #ddd; border-radius: 6px; padding: 0.5em; background: #fafafa;"></div>
+  <div id="quickPrompts" style="display:flex; gap:8px; flex-wrap: wrap; margin-top:8px;">
+    <button onclick="sendQuick('Give me a summary of my last 30 days')" class="btn btn-ghost">Summary</button>
+    <button onclick="sendQuick('What are my top categories?')" class="btn btn-ghost">Top Categories</button>
+    <button onclick="sendQuick('How much did I spend on Food?')" class="btn btn-ghost">Food Spend</button>
+    <button onclick="sendQuick('Set cap for Entertainment to 2000')" class="btn btn-ghost">Set Cap</button>
+    <button onclick="sendQuick('Set my budget to 30000')" class="btn btn-ghost">Set Budget</button>
+  </div>
+  <div id="ctxPrompts" style="display:flex; gap:8px; flex-wrap: wrap; margin-top:6px;"></div>
+  <div style="display: flex; gap: 8px; margin-top: 8px;">
+    <input id="chatInput" type="text" placeholder="Ask for tips, e.g., How to reduce food costs?" style="flex: 1;">
+    <input id="budgetInput" type="number" min="0" placeholder="Monthly budget (₹)" style="width: 180px;">
+    <button id="setBudgetBtn" onclick="setBudgetFromInput()" class="btn btn-secondary">Set Budget</button>
+    <button id="sendChatBtn" onclick="sendAdvice()" class="btn btn-primary">Send</button>
+  </div>
+  <small style="display:block; margin-top:6px; color:#666;">Examples: "Set my budget to 30000", "Set cap for Food to 8000", "Summary", "How much did I spend on Travel?"</small>
+  <div style="margin-top:6px;"><a href="#" onclick="downloadAnalysisPdf(); return false;">Download Analysis (PDF)</a></div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+<!-- Expense Modal: Upload or Capture -->
+<div id="cameraModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="margin:0">Add New Expense</h3>
+      <button class="modal-close" onclick="closeExpenseModal()">✕</button>
+    </div>
+    <div class="tabbar">
+      <button id="tabUploadBtn" class="tab-btn active" onclick="switchExpenseTab('upload')">Upload File</button>
+      <button id="tabCaptureBtn" class="tab-btn" onclick="switchExpenseTab('capture')">Capture via Camera</button>
+      <button id="tabManualBtn" class="tab-btn" onclick="switchExpenseTab('manual')">Enter Manually</button>
+    </div>
+    <div id="tabUpload" class="tab-panel is-active">
+      <input type="file" id="modalFileInput" accept="image/*">
+      <div style="margin-top:10px">
+        <button class="btn btn-primary" onclick="uploadFromModalFile()">Analyze</button>
+      </div>
+    </div>
+    <div id="tabCapture" class="tab-panel">
+      <div class="video-wrap">
+        <video id="webcam" autoplay playsinline></video>
+        <canvas id="captureCanvas" style="display:none"></canvas>
+        <div class="focus-indicator" aria-hidden="true"></div>
+      </div>
+      <div class="cam-controls">
+        <button class="btn btn-secondary" onclick="toggleTorch()" id="torchBtn">Flash</button>
+        <button class="btn btn-primary" onclick="snapReceipt()">Snap Receipt</button>
+      </div>
+      <p class="form-note" id="cameraNote">Allow camera access for quick capture. Ensure good lighting and hold steady.</p>
+    </div>
+    <div id="tabManual" class="tab-panel">
+      <div class="form-row"><label>Merchant<input type="text" id="manMerchant" placeholder="e.g., Reliance Fresh"></label></div>
+      <div class="form-row"><label>Category
+        <select id="manCategory">
+          <option>Food</option>
+          <option>Travel</option>
+          <option>Entertainment</option>
+          <option>Bills</option>
+          <option>Shopping</option>
+          <option>Health</option>
+          <option>Misc</option>
+        </select>
+      </label></div>
+      <div class="form-row"><label>Amount (₹)<input type="number" step="0.01" id="manAmount" placeholder="0.00"></label></div>
+      <div class="form-row"><label>Date/Time<input type="datetime-local" id="manDate"></label></div>
+      <div class="form-row"><label>Note<textarea id="manNote" rows="2" placeholder="Optional"></textarea></label></div>
+      <div class="form-actions">
+        <button id="manualSaveBtn" class="btn btn-primary" onclick="submitManualExpense()">Save Expense</button>
+        <span id="manualSaveStatus" style="margin-left:8px;color:#64748b;font-size:12px;"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

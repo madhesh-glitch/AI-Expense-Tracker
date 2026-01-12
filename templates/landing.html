@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <h1 class="hero-title">Stop Tracking, Start Analyzing</h1>
+      <p class="hero-sub">Automatically scan receipts, categorize spending with 99% accuracy, and generate instant, professional reports.</p>
+      <div class="hero-ctas">
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Start 14-Day Free Trial</a>
+        <a href="{{ url_for('login') }}" class="btn btn-ghost">View Demo</a>
+      </div>
+      <div class="hero-trust-badges" aria-label="Trust badges">
+        <span>Secure by design</span>
+        <span>Privacy-first</span>
+        <span>Works on all devices</span>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="device-mock">
+        <div class="mock-header"></div>
+        <div class="mock-body">
+          <div class="mock-chart"></div>
+          <div class="mock-list">
+            <div class="mock-row"></div>
+            <div class="mock-row"></div>
+            <div class="mock-row"></div>
+            <div class="mock-row"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="section-head">
+    <h2>AI that does the heavy lifting</h2>
+    <p>Focus on decisions, not data entry.</p>
+  </div>
+  <div class="grid-3">
+    <div class="feature-card">
+      <div class="icon-circle" aria-hidden="true">📷</div>
+      <h3>Automated Data Extraction</h3>
+      <p>Snap or upload receipts. Our OCR pulls totals, dates, and merchants—no manual typing.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon-circle" aria-hidden="true">🧠</div>
+      <h3>Intelligent Categorization</h3>
+      <p>Machine learning classifies expenses with high accuracy and adapts to your patterns.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon-circle" aria-hidden="true">🔒</div>
+      <h3>Fraud & Anomaly Detection</h3>
+      <p>Detect unusual spend, duplicates, and outliers proactively with explainable insights.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon-circle" aria-hidden="true">📊</div>
+      <h3>Instant, Professional Reports</h3>
+      <p>Export clean summaries and PDF analyses ready for clients, auditors, or tax season.</p>
+    </div>
+  </div>
+</section>
+
+<section class="trust">
+  <div class="logos" aria-label="Partner logos">
+    <div class="logo-pill">ACME</div>
+    <div class="logo-pill">ZENBOOKS</div>
+    <div class="logo-pill">NEBULA</div>
+    <div class="logo-pill">ALPHA</div>
+  </div>
+  <div class="split">
+    <blockquote class="quote">
+      “AI‑Expenses Tracker cut my month‑end reconciliation time by 70%. The categorization accuracy is stellar.”
+      <cite>— Priya S., Finance Lead</cite>
+    </blockquote>
+    <div class="security">
+      <h3>Security & Privacy</h3>
+      <ul>
+        <li>Data encrypted in transit and at rest</li>
+        <li>Granular access control per user</li>
+        <li>Export and delete your data anytime</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band">
+  <div class="cta-inner">
+    <h2>Start your 14‑day free trial</h2>
+    <p>No credit card required. Get value in minutes.</p>
+    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Get Started</a>
+    <a href="{{ url_for('login') }}" class="btn btn-ghost">See pricing</a>
+  </div>
+</section>
+
+{% endblock %}

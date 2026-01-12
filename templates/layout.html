@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title or 'AI-Expenses Tracker' }}</title>
+  <link rel="icon" href="{{ url_for('logo_asset') }}">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='animations.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+  {% if current_user.is_authenticated %}
+  <script src="{{ url_for('static', filename='firebase-config.js') }}"></script>
+  {% if current_user.is_admin %}
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  {% endif %}
+  {% endif %}
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- Animation Library -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  
+  <!-- PWA Support -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#4361ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <style>
+    /* YouTube-style notification styles */
+    .notification-container {
+      position: relative;
+      margin-right: 15px;
+    }
+    
+    .notification-bell {
+      background: none;
+      border: none;
+      color: #606060;
+      font-size: 20px;
+      cursor: pointer;
+      position: relative;
+      padding: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s;
+    }
+    
+    .notification-bell:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .notification-count {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #cc0000;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .notification-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      width: 360px;
+      max-height: 500px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      overflow: hidden;
+    }
+    
+    .notification-dropdown.show {
+      display: block;
+    }
+    
+    .notification-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    
+    .notification-header h4 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .mark-read-btn {
+      background: none;
+      border: none;
+      color: #065fd4;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    
+    .mark-read-btn:hover {
+      background-color: rgba(6, 95, 212, 0.1);
+    }
+    
+    .notification-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .notification-item {
+      display: flex;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f2f2f2;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .notification-item:hover {
+      background-color: #f9f9f9;
+    }
+    
+    .notification-item.unread {
+      background-color: #e8f0fe;
+    }
+    
+    .notification-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e0e0e0;
+      margin-right: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #606060;
+    }
+    
+    .notification-content {
+      flex: 1;
+    }
+    
+    .notification-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #030303;
+    }
+    
+    .notification-message {
+      color: #606060;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    
+    .notification-time {
+      color: #909090;
+      font-size: 12px;
+    }
+    
+    .empty-notifications {
+      padding: 32px 16px;
+      text-align: center;
+      color: #606060;
+    }
+    
+    .notification-footer {
+      padding: 12px 16px;
+      text-align: center;
+      border-top: 1px solid #e5e5e5;
+    }
+    
+    .view-all {
+      color: #065fd4;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .view-all:hover {
+      text-decoration: underline;
+    }
+  </style>
+  {% if request.path.startswith('/admin') %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+  {% endif %}
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <!-- Main Script -->
+  <script src="{{ url_for('static', filename='script.js') }}" type="module"></script>
+  
+  <!-- Service Worker Registration -->
+  <script>
+    // Theme Toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+    
+    // Check for saved theme preference or use system preference
+    const savedTheme = localStorage.getItem('theme') || 
+                      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    html.setAttribute('data-theme', savedTheme);
+    
+    // Apply theme to document
+    document.body.classList.add('theme-' + savedTheme);
+    
+    if (themeToggle) {
+      themeToggle.checked = savedTheme === 'dark';
+      
+      // Toggle theme when the switch is clicked
+      themeToggle.addEventListener('change', () => {
+        const newTheme = themeToggle.checked ? 'dark' : 'light';
+        html.setAttribute('data-theme', newTheme);
+        document.body.classList.remove('theme-dark', 'theme-light');
+        document.body.classList.add('theme-' + newTheme);
+        localStorage.setItem('theme', newTheme);
+      });
+    }
+    
+    // Initialize Firebase
+    document.addEventListener('DOMContentLoaded', () => {
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('{{ url_for("static", filename="sw.js") }}')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(err => {
+            console.error('ServiceWorker registration failed: ', err);
+          });
+      }
+
+      // Load Firebase config if Firebase is available
+      if (typeof firebase !== 'undefined') {
+        import('/static/firebase-config.js')
+          .then(() => {
+            console.log('Firebase config loaded');
+            // Load the admin script if on admin page
+            if (window.location.pathname.startsWith('/admin')) {
+              return import('/static/admin.js');
+            }
+          })
+          .then(() => {
+            console.log('Admin script loaded');
+          })
+          .catch(error => {
+            console.error('Error loading scripts:', error);
+          });
+      } else {
+        console.warn('Firebase is not available');
+      }
+    });
+  </script>
+</head>
+<body data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}">
+  <nav class="top-nav">
+    <div class="nav-inner">
+      <div class="brand">
+        <a href="{{ url_for('home') }}" class="brand-link">
+          <img src="{{ url_for('logo_asset') }}" alt="Logo" class="logo">
+          <span class="brand-text" style="color:black">AI-Expenses Tracker</span>
+        </a>
+      </div>
+      <div class="nav-links">
+        {% if current_user.is_authenticated %}
+          <!-- Notification Bell -->
+          <div class="notification-container">
+            <button id="notificationBell" class="notification-bell" aria-label="Notifications">
+              <i class="fas fa-bell"></i>
+              <span id="notificationCount" class="notification-count">0</span>
+            </button>
+            <div id="notificationDropdown" class="notification-dropdown">
+              <div class="notification-header">
+                <h4>Notifications</h4>
+                <button id="markAllRead" class="mark-read-btn">Mark all as read</button>
+              </div>
+              <div id="notificationList" class="notification-list">
+                <div class="empty-notifications">No new notifications</div>
+              </div>
+              <div class="notification-footer">
+                <a href="#" class="view-all">View all notifications</a>
+              </div>
+            </div>
+          </div>
+          {% if current_user.is_admin %}
+          <a href="{{ url_for('admin_dashboard') }}" class="nav-link">Admin</a>
+          {% endif %}
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+          <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+  <div class="page-wrap">
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+  
+  <!-- Notification Permission Button -->
+  <button id="enableNotifications" class="notification-permission">Enable Notifications</button>
+  
+  <script>
+    // YouTube-style notification system
+    document.addEventListener('DOMContentLoaded', () => {
+      const notificationBell = document.getElementById('notificationBell');
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      const notificationList = document.getElementById('notificationList');
+      const notificationCount = document.getElementById('notificationCount');
+      const markAllReadBtn = document.getElementById('markAllRead');
+      
+      // Toggle dropdown when clicking the bell
+      notificationBell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notificationDropdown.classList.toggle('show');
+        
+        // Mark all as read when dropdown is opened
+        if (notificationDropdown.classList.contains('show')) {
+          markAllAsRead();
+        }
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+          notificationDropdown.classList.remove('show');
+        }
+      });
+      
+      // Mark all notifications as read
+      function markAllAsRead() {
+        const unreadItems = notificationList.querySelectorAll('.unread');
+        unreadItems.forEach(item => {
+          item.classList.remove('unread');
+        });
+        updateNotificationCount(0);
+        // Here you would typically make an API call to update the backend
+      }
+      
+      // Update notification count
+      function updateNotificationCount(count) {
+        notificationCount.textContent = count;
+        notificationCount.style.display = count > 0 ? 'flex' : 'none';
+      }
+      
+      // Add click handler for mark all as read button
+      markAllReadBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        markAllAsRead();
+      });
+      
+      // Check if user is authenticated and Firebase is available
+      const isAuthenticated = document.body.getAttribute('data-authenticated') === 'true';
+      
+      if (isAuthenticated && window.firebaseApp) {
+        const { db } = window.firebaseApp;
+        const LAST_ANNOUNCEMENT_KEY = 'lastAnnouncementTime';
+        
+        // Debug log
+        console.log('Firebase initialized:', !!firebase);
+        console.log('Firestore instance:', !!db);
+        
+        // Get the last notification time from localStorage
+        const lastNotified = localStorage.getItem(LAST_ANNOUNCEMENT_KEY);
+        const lastNotifiedTime = lastNotified ? new Date(parseInt(lastNotified)) : null;
+        
+        // Function to add a notification to the list
+        function addNotificationToUI(announcement, isNew = false) {
+          const notificationItem = document.createElement('div');
+          notificationItem.className = `notification-item ${isNew ? 'unread' : ''}`;
+          
+          const timeAgo = getTimeAgo(announcement.created_at ? announcement.created_at.toDate() : new Date());
+          
+          notificationItem.innerHTML = `
+            <div class="notification-avatar">
+              <i class="fas fa-bullhorn"></i>
+            </div>
+            <div class="notification-content">
+              <div class="notification-title">${announcement.title || 'New Announcement'}</div>
+              <div class="notification-message">${announcement.content || ''}</div>
+              <div class="notification-time">${timeAgo}</div>
+            </div>
+          `;
+          
+          // Add click handler
+          notificationItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Handle notification click (e.g., navigate to announcement)
+            console.log('Notification clicked:', announcement);
+          });
+          
+          // Add to the top of the list
+          const emptyMsg = notificationList.querySelector('.empty-notifications');
+          if (emptyMsg) {
+            notificationList.innerHTML = '';
+          }
+          notificationList.insertBefore(notificationItem, notificationList.firstChild);
+          
+          // Update count if this is a new notification
+          if (isNew) {
+            const currentCount = parseInt(notificationCount.textContent || '0');
+            updateNotificationCount(currentCount + 1);
+          }
+        }
+        
+        // Helper function to format time ago
+        function getTimeAgo(date) {
+          const seconds = Math.floor((new Date() - date) / 1000);
+          let interval = Math.floor(seconds / 31536000);
+          
+          if (interval >= 1) return interval + ' year' + (interval === 1 ? '' : 's') + ' ago';
+          interval = Math.floor(seconds / 2592000);
+          if (interval >= 1) return interval + ' month' + (interval === 1 ? '' : 's') + ' ago';
+          interval = Math.floor(seconds / 86400);
+          if (interval >= 1) return interval + ' day' + (interval === 1 ? '' : 's') + ' ago';
+          interval = Math.floor(seconds / 3600);
+          if (interval >= 1) return interval + ' hour' + (interval === 1 ? '' : 's') + ' ago';
+          interval = Math.floor(seconds / 60);
+          if (interval >= 1) return interval + ' minute' + (interval === 1 ? '' : 's') + ' ago';
+          return 'just now';
+        }
+        
+        // Load existing announcements
+        db.collection('updates_and_announcements')
+          .orderBy('created_at', 'desc')
+          .limit(10)
+          .get()
+          .then((snapshot) => {
+            if (snapshot.empty) {
+              notificationList.innerHTML = '<div class="empty-notifications">No notifications yet</div>';
+              return;
+            }
+            
+            notificationList.innerHTML = ''; // Clear loading/empty message
+            let newNotificationCount = 0;
+            const now = new Date();
+            const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
+            
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              const announcementTime = data.created_at ? data.created_at.toDate() : now;
+              const isNew = (!lastNotifiedTime || announcementTime > lastNotifiedTime) && 
+                           announcementTime > fiveMinutesAgo;
+              
+              addNotificationToUI(data, isNew);
+              
+              if (isNew) {
+                newNotificationCount++;
+              }
+            });
+            
+            updateNotificationCount(newNotificationCount);
+            
+            // Update last notified time if there are new notifications
+            if (newNotificationCount > 0) {
+              localStorage.setItem(LAST_ANNOUNCEMENT_KEY, now.getTime().toString());
+              
+              // Show browser notification for the latest one
+              if (Notification.permission === 'granted') {
+                const latest = snapshot.docs[0].data();
+                new Notification(latest.title || 'New Announcement', {
+                  body: latest.content || '',
+                  icon: '{{ url_for("logo_asset") }}'
+                });
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error loading notifications:', error);
+            notificationList.innerHTML = '<div class="empty-notifications">Error loading notifications</div>';
+          });
+          
+        // Listen for new announcements in real-time
+        db.collection('updates_and_announcements')
+          .orderBy('created_at', 'desc')
+          .limit(1)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const data = change.doc.data();
+                const announcementTime = data.created_at ? data.created_at.toDate() : new Date();
+                const fiveMinutesAgo = new Date();
+                fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5);
+                
+                if (announcementTime > fiveMinutesAgo) {
+                  // Add to UI
+                  addNotificationToUI(data, true);
+                  
+                  // Show browser notification
+                  if (Notification.permission === 'granted') {
+                    new Notification(data.title || 'New Announcement', {
+                      body: data.content || '',
+                      icon: '{{ url_for("logo_asset") }}'
+                    });
+                  }
+                }
+              }
+            });
+          });
+      }
+    });
+  </script>
+</body>
+</html>

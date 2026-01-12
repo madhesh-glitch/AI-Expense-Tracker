@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Deep Analysis</h2>
+
+<section class="filters card">
+  <div class="filter-row">
+    <label>Start
+      <input type="date" id="rangeStart">
+    </label>
+    <label>End
+      <input type="date" id="rangeEnd">
+    </label>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" onclick="setQuickRange('month')">This Month</button>
+      <button class="btn btn-secondary" onclick="setQuickRange('quarter')">This Quarter</button>
+      <button class="btn btn-secondary" onclick="setQuickRange('year')">This Year</button>
+      <button class="btn btn-primary" onclick="refreshAnalysis()">Apply</button>
+    </div>
+  </div>
+</section>
+
+<section class="split-2">
+  <div class="card">
+    <h3>Trend: Expenses Over Time</h3>
+    <canvas id="trendChart" height="200"></canvas>
+  </div>
+  <div class="card">
+    <h3>Category Breakdown</h3>
+    <canvas id="categoryChart" height="200"></canvas>
+  </div>
+</section>
+
+<section class="split-2">
+  <div class="card">
+    <h3>AI Insights</h3>
+    <ul id="insightsList" class="insights"></ul>
+  </div>
+  <div class="card">
+    <h3>Detailed Table</h3>
+    <div class="table-wrap">
+      <table class="data-table" id="analysisTable">
+        <thead>
+          <tr><th>Date</th><th>Merchant</th><th>Category</th><th style="text-align:right">Amount</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
